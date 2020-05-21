@@ -3,6 +3,8 @@ Submit Algo price on-chain.
 
 It needs a settings.js file like this one:
 
+
+```
 module.exports = {
 	key: "YOUR MNEMONIC",
 	public: "MYALGORANDADDRESS",
@@ -10,3 +12,4 @@ module.exports = {
 	"messari-api-key": "YOUR MESSARI KEY",
 	interval: 1000	
 }
+```
