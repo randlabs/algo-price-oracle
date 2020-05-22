@@ -1,5 +1,6 @@
 const algosdk = require('algosdk');
 const path = require("path");
+const process = require('process');
 
 const portNode  = "";
 const https = require('https');
@@ -15,6 +16,8 @@ let messariKey;
 
 let lastTx = null;
 let lastTxTime = 0;
+
+let should_quit = false;
 
 doHttpsRequest = function () {
 	return new Promise((resolve, reject) => {
@@ -54,6 +57,22 @@ doHttpsRequest = function () {
 	})
 }
 
+async function sleep(milliseconds, cancellable) {
+	if (cancellable) {
+		while (milliseconds > 0 && (!should_quit)) {
+			const maximum = 500;
+			const to_wait = (milliseconds > maximum) ? maximum : milliseconds;
+			milliseconds -= to_wait;
+			await sleep(to_wait, false);
+		}
+	}
+	else {
+		return new Promise((resolve) => {
+			setTimeout(resolve, milliseconds);
+		});
+	}
+}
+
 function timeoutPromise(ms, promise) {
 	return new Promise((resolve, reject) => {
 	  const timeoutId = setTimeout(() => {
@@ -73,65 +92,73 @@ function timeoutPromise(ms, promise) {
   }
   
 async function main() {
-	let start = Date.now();
+	process.on('SIGINT', function() {
+		should_quit = true;
+	});
+	process.on('SIGTERM', function() {
+		should_quit = true;
+	});
 
-	try {
-		previousTxTime = lastTxTime;
-		var date = new Date();
+	console.log("   ******   MAIN   ******\n");
 
-		let req = (await timeoutPromise(5000, doHttpsRequest()));
+	while (!should_quit) {
+		let start = Date.now();
 
-		let note = {
-			price_algo_usd: req.data.market_data.price_usd,
-			price_algo_btc: req.data.market_data.price_btc,
-			last_trade_at: req.data.market_data.last_trade_at,
-			timestamp: date.toISOString()
-		};	
+		try {
+			previousTxTime = lastTxTime;
+			var date = new Date();
 
-		let params = await algodclient.getTransactionParams();
-	
-		let txnHeader = {
-			"from": sendAddr,
-			"to": sendAddr,
-			"fee": 1000,
-			"amount": 0,
-			"firstRound": params.lastRound,
-			"lastRound": params.lastRound + parseInt(500),
-			"genesisID": params.genesisID,
-			"genesisHash": params.genesishashb64,
-			"flatFee": true,
-			"note": new Uint8Array(Buffer.from(JSON.stringify(note), "utf8")),
-		};
-	
-		const txHeaders = {
-			'Content-Type' : 'application/x-binary'
-		}
+			let req = (await timeoutPromise(5000, doHttpsRequest()));
+
+			let note = {
+				price_algo_usd: req.data.market_data.price_usd,
+				price_algo_btc: req.data.market_data.price_btc,
+				last_trade_at: req.data.market_data.last_trade_at,
+				timestamp: date.toISOString()
+			};	
+
+			let params = await algodclient.getTransactionParams();
 		
-		let signedTxn = algosdk.signTransaction(txnHeader, recoveredAccount.sk);
-		let tx = (await timeoutPromise(5000, algodclient.sendRawTransaction(signedTxn.blob, txHeaders)));
+			let txnHeader = {
+				"from": sendAddr,
+				"to": sendAddr,
+				"fee": 1000,
+				"amount": 0,
+				"firstRound": params.lastRound,
+				"lastRound": params.lastRound + parseInt(500),
+				"genesisID": params.genesisID,
+				"genesisHash": params.genesishashb64,
+				"flatFee": true,
+				"note": new Uint8Array(Buffer.from(JSON.stringify(note), "utf8")),
+			};
+		
+			const txHeaders = {
+				'Content-Type' : 'application/x-binary'
+			}
+			
+			let signedTxn = algosdk.signTransaction(txnHeader, recoveredAccount.sk);
+			let tx = (await timeoutPromise(5000, algodclient.sendRawTransaction(signedTxn.blob, txHeaders)));
 
-		lastTx = tx;
-		lastTxTime = date.getTime();
-	
-		console.log("Price submitter tx " + tx.txId + " submitted on block " + params.lastRound + " Data Timestamp " + note.timestamp);
+			lastTx = tx;
+			lastTxTime = date.getTime();
+		
+			console.log("Price submitter tx " + tx.txId + " submitted on block " + params.lastRound + " Data Timestamp " + note.timestamp);
 
-		// more than interval just do it
-		let elapsed = Date.now() - start;
-		if (elapsed > txInterval) {
-			setTimeout(main);
+			// more than interval just do it
+			let elapsed = Date.now() - start;
+			if (elapsed < txInterval) {
+				await sleep(txInterval - elapsed, true);
+			}
 		}
-		else {
-			setTimeout(main, txInterval - elapsed);
+		catch(e) {
+			if(e && e.error && e.error.message) {
+				console.log(e.error.message);
+			}
+			else {
+				console.log("Error: " + e);
+			}
+			await sleep(1000, true);
 		}
-	}
-	catch(e) {
-		if(e && e.error) {
-			console.log(e.error);
-		}
-		else {
-			console.log("Error: " + e);
-		}
-		setTimeout(main, 10000);
 	}
 }
 
@@ -171,7 +198,6 @@ async function main() {
 	if(recoveredAccount.addr !== settings.public) {
 		throw new Error("ERROR: Unable to load settings file.");
 	}		
-
 	setTimeout(main);
 })().catch(e => {
     console.log(e);
