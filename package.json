@@ -9,7 +9,9 @@
   "author": "RandLabs.IO",
   "license": "",
   "dependencies": {
-    "algosdk": "1.4.1"
+    "abort-controller": "^3.0.0",
+    "algosdk": "1.4.1",
+    "websocket": "^1.0.31"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
