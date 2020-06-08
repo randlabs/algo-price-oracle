@@ -252,7 +252,7 @@ async function sendPriceTransaction() {
 			socketAddress: "wss://ws-feed.pro.coinbase.com"
 		};
 
-	algodclient = new algosdk.Algod("", server, portNode); 
+	algodclient = new algosdk.Algod(String.empty, server, portNode); 
 
 	if(recoveredAccount.addr !== settings.public) {
 		throw new Error("ERROR: Unable to load settings file.");
