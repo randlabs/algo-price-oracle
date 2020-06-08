@@ -17,7 +17,7 @@ This Price Oracle uses the public address: [PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVF
 
 ## Configuration
 
-The submitter address and the Messari key must be set on the configuration file.
+The submitter address and the API endpoint must be set on the configuration file.
 
 It needs a settings.js file like this one:
 
