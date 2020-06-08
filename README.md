@@ -4,16 +4,16 @@ This price oracle maintains an on-chain ALGO/USD price to serve as a reliable so
 
 ## Price Source
 
-The code gets ALGO/USD price from Coinbase API subscribing to a socket receiving new trade updates to keep the price always updated.
+The code gets ALGO/USD price from Coinbase API subscribing to a socket receiving new trade updates keeping the price always updated.
 
 ## Transaction Submission
 
-Periodically, the oracle submits a transaction with the last ALGO/USD price, the timestamp of the last trade and the timestamp of the transaction submission. The transaction timestamp is needed to enable frequencies faster than the block speed, currently around 4 seconds.
+Periodically, the oracle submits a transaction with the last ALGO/USD price, the timestamp of the last trade, and the timestamp of the transaction submission. The transaction timestamp is needed to enable frequencies faster than the block speed, currently around 4 seconds.
 This oracle aims to submit the price with a frequency of 1/2 seconds. 
 
 ## Address
 
-It uses the public address: [PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U](http://algoexplorer.io/address/PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U)
+This Price Oracle uses the public address: [PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U](http://algoexplorer.io/address/PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U) to submit transactions.
 
 ## Configuration
 
