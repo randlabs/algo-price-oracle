@@ -1,4 +1,4 @@
-# algo-price-oracle
+# Algo Price Oracle
 
 The Algo Price Oracle maintains an on-chain ALGO/USD price to serve as a reliable source for external applications.
 
