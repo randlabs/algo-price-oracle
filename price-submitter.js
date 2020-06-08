@@ -4,7 +4,6 @@ const process = require('process');
 const AbortController = require("abort-controller");
 
 const portNode  = "";
-const https = require('https');
 const WebSocketClient = require("websocket").client;
 const controller = new AbortController();
 
@@ -19,51 +18,12 @@ let txInterval = 1000;
 let websocketReconnection = 2000;
 let marketData;
 
-let lastTx = null;
 let lastTxTime = 0;
 
 let should_quit = false;
 
 
 const WEBSOCKET_PING_INTERVAL_TIME_IN_SEC = 5;
-
-// doHttpsRequest = function () {
-// 	return new Promise((resolve, reject) => {
-// 		const options = {
-// 			hostname: 'data.messari.io',
-// 			port: 443,
-// 			path: '/api/v1/assets/algo/metrics',
-// 			method: 'GET',
-// 			headers: {
-// 				"x-messari-api-key": messariKey
-// 			}
-// 		};
-// 		var req = https.request(options, function(res) {
-// 			req.socket.setTimeout(5000);
-// 			let data = '';
-// 			res.on('data', (chunk) => {
-// 				data += chunk;
-// 			});
-// 			res.on('end', () => {
-// 				try {
-// 					let resJson = JSON.parse(data);
-// 					resolve(resJson);
-// 				}
-// 				catch (err) {
-// 					reject("Error parsing response: " + err);
-// 				}
-// 			}
-// 			);
-// 			req.socket.on('timeout', function() {
-// 				req.abort();
-// 			});
-// 		});
-// 		req.on('error', function(err) {
-// 			reject(err);
-// 		  });
-// 		req.end();		  
-// 	})
-// }
 
 async function sleep(milliseconds, cancellable) {
 	if (cancellable) {
@@ -268,21 +228,31 @@ async function sendPriceTransaction() {
 	if (!settings.server) {
 		throw new Error("ERROR: server not defined.");
 	}
-	if (!settings.token || typeof settings.token !== "object") {
-		throw new Error("ERROR: token must be an object.");
-	}
-	// if (!settings["messari-api-key"]) {
-	// 	throw new Error("ERROR: Messari key missing.");
-	// }
-	// messariKey = settings["messari-api-key"];
 
 	server = settings.server;
 	token = settings.token;
-	realPrice = settings.realPrice;
-	if (!realPrice) {
-		throw new Error("ERROR: realPrice field not set.");
-	}
-	algodclient = new algosdk.Algod(token, server, portNode); 
+
+	realPrice = 
+		{
+			configKeyName: "price",
+			subscribe: {
+				type: "subscribe",
+				product_ids: [
+					"ALGO-USD",
+				],
+				channels: [
+					{
+						name: "ticker",
+						product_ids: [
+							"ALGO-USD",
+						]
+					}
+				]
+			},
+			socketAddress: "wss://ws-feed.pro.coinbase.com"
+		};
+
+	algodclient = new algosdk.Algod("", server, portNode); 
 
 	if(recoveredAccount.addr !== settings.public) {
 		throw new Error("ERROR: Unable to load settings file.");
