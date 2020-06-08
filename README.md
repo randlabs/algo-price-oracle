@@ -1,6 +1,6 @@
 # algo-price-oracle
 
-This price oracle maintains an on-chain ALGO/USD price to serve as a reliable source for DeFi decentralized applications.
+This price oracle maintains an on-chain ALGO/USD price to serve as a reliable source for external applications.
 
 ## Price Source
 
