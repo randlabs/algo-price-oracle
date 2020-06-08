@@ -1,6 +1,6 @@
 # algo-price-oracle
 
-This price oracle maintains an on-chain ALGO/USD price to serve as a reliable source for external applications.
+The Algo Price Oracle maintains an on-chain ALGO/USD price to serve as a reliable source for external applications.
 
 ## Price Source
 
@@ -13,7 +13,7 @@ This oracle aims to submit the price with a frequency of 1/2 seconds.
 
 ## Address
 
-This Price Oracle uses the public address: [PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U](http://algoexplorer.io/address/PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U) to submit transactions.
+Algo Price Oracle uses the public address: [PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U](http://algoexplorer.io/address/PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U) to submit transactions.
 
 ## Configuration
 
