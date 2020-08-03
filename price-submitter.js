@@ -9,7 +9,7 @@ const portNode  = "";
 const WebSocketClient = require("websocket").client;
 const controller = new AbortController();
 
-let token;
+let token = String.empty;
 
 let algodclient;
 
@@ -248,13 +248,15 @@ async function sendPriceTransaction() {
 	if (settings.priceExpiration) {
 		priceExpiration = settings.priceExpiration;
 	}
+	if (settings.token) {
+		token = settings.token;
+	}
 
 	if (!settings.server) {
 		throw new Error("ERROR: server not defined.");
 	}
 
 	server = settings.server;
-	token = settings.token ?? String.empty;
 
 	realPrice = 
 		{
