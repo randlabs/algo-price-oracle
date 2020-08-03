@@ -19,9 +19,9 @@ let realPrice;
 let txInterval = 1000;
 let websocketReconnection = 2000;
 let marketData;
-let priceDecimals;
+let priceDecimals = 4;
 var lastPriceRound;
-var priceExpiration;
+let priceExpiration = 20;
 
 let should_quit = false;
 
@@ -242,9 +242,12 @@ async function sendPriceTransaction() {
 		websocketReconnection = settings.websocketReconnection;
 	}
 
-	priceDecimals = settings.decimals ?? 4;
-	priceExpiration = settings.priceExpiration ?? 20;
-
+	if (settings.decimals) {
+		priceDecimals = settings.decimals;
+	}
+	if (settings.priceExpiration) {
+		priceExpiration = settings.priceExpiration;
+	}
 
 	if (!settings.server) {
 		throw new Error("ERROR: server not defined.");
