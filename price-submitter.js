@@ -1,7 +1,9 @@
 const algosdk = require('algosdk');
+const templates = require('algosdk/src/logicTemplates/templates');
 const path = require("path");
 const process = require('process');
 const AbortController = require("abort-controller");
+const { stringContaining } = require('expect');
 
 const portNode  = "";
 const WebSocketClient = require("websocket").client;
@@ -11,14 +13,15 @@ let token;
 
 let algodclient;
 
-var recoveredAccount; 
-var sendAddr;
+var oracleAccount;
+var submitterAccount;
 let realPrice;
 let txInterval = 1000;
 let websocketReconnection = 2000;
 let marketData;
-
-let lastTxTime = 0;
+let priceDecimals;
+var lastPriceRound;
+var priceExpiration;
 
 let should_quit = false;
 
@@ -149,42 +152,55 @@ async function sendPriceTransaction() {
 			let start = Date.now();
 
 			try {
-				previousTxTime = lastTxTime;
 				var date = new Date();
 	
-				let note = {
-					price_algo_usd: marketData.price,
-					last_trade_at: marketData.time,
-					timestamp: date.toISOString()
-				};	
-	
 				let params = await algodclient.getTransactionParams();
-			
-				let txnHeader = {
-					"from": sendAddr,
-					"to": sendAddr,
-					"fee": 1000,
-					"amount": 0,
-					"firstRound": params.lastRound,
-					"lastRound": params.lastRound + parseInt(500),
-					"genesisID": params.genesisID,
+		
+				let suggestedParams = {
 					"genesisHash": params.genesishashb64,
-					"flatFee": true,
-					"note": new Uint8Array(Buffer.from(JSON.stringify(note), "utf8")),
+					"genesisID": params.genesisID,
+					"firstRound": params.lastRound,
+					"lastRound": params.lastRound + 10,
+					"fee": params.minFee,
+					"flatFee": true
 				};
+		
+				if (suggestedParams.lastRound !== lastPriceRound) {
+					let price = Math.floor (marketData.price * Math.pow(10, priceDecimals) );
+
+					let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAZChDwUGJgEgK+3MznfMOKICd7ZFpboZ5Q4jRSP/getreWQoYDjPqqMxECISMQEyABIQMQgjDxAxBygSEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
+		
+					let referenceOffsets = [ /*Price*/ 7, /*LastValid*/ 8];
+					let injectionVector =  [price, params.lastRound + priceExpiration];
+					let injectionTypes = [templates.valTypes.INT, templates.valTypes.INT];
+		
+					var buff = templates.inject(oracleProgramReferenceProgramBytesReplace, referenceOffsets, injectionVector, injectionTypes);
+					let oracleProgram = new Uint8Array(buff);			
+					let lsigOracle = algosdk.makeLogicSig(oracleProgram);
+
+					lsigOracle.sign(oracleAccount.sk);
 			
-				const txHeaders = {
-					'Content-Type' : 'application/x-binary'
-				}
-				
-				let signedTxn = algosdk.signTransaction(txnHeader, recoveredAccount.sk);
-				let tx = (await timeoutPromise(5000, algodclient.sendRawTransaction(signedTxn.blob, txHeaders)));
-	
-				lastTx = tx;
-				lastTxTime = date.getTime();
+					let priceObj = {
+						signature: lsigOracle.get_obj_for_encoding(),
+						price: price,
+						decimals: priceDecimals,
+						last_trade_at: marketData.time,
+						timestamp: date.toISOString()
+					}
 			
-				console.log("Price submitter tx " + tx.txId + " submitted on block " + params.lastRound + " Data Timestamp " + note.timestamp);
-	
+				 	let oraclePriceSubmitterTx = algosdk.makePaymentTxn (submitterAccount.addr,
+						submitterAccount.addr, params.minFee, 0, undefined, suggestedParams.firstRound, suggestedParams.lastRound, 
+						algosdk.encodeObj(priceObj), suggestedParams.genesisHash, suggestedParams.genesisID);
+					oraclePriceSubmitterTx.flatFee = true;
+					oraclePriceSubmitterTx.fee = params.minFee;
+					let oraclePriceSubmitterTxSigned = oraclePriceSubmitterTx.signTxn(submitterAccount.sk);
+					let oraclePriceTx = (await timeoutPromise(5000,  algodclient.sendRawTransaction(oraclePriceSubmitterTxSigned) ) );
+
+					lastPriceRound = suggestedParams.lastRound;
+					
+					console.log("Price Transaction Submitted: " + oraclePriceTx.txId + " submitted on block " + params.lastRound + " Data Timestamp " + priceObj.timestamp);
+				}		
+
 				// more than interval just do it
 				let elapsed = Date.now() - start;
 				if (elapsed < txInterval) {
@@ -215,8 +231,9 @@ async function sendPriceTransaction() {
 		throw new Error("ERROR: Unable to load settings file.");
 	}
 
-	recoveredAccount = algosdk.mnemonicToSecretKey(settings.key);
-	sendAddr = recoveredAccount.addr;
+	// I use the same account until we can get it signed by the real price authority
+	submitterAccount = algosdk.mnemonicToSecretKey(settings.submitterKey);
+	oracleAccount = algosdk.mnemonicToSecretKey(settings.oracleKey);
 
 	if (settings.interval) {
 		txInterval = settings.interval;
@@ -225,12 +242,16 @@ async function sendPriceTransaction() {
 		websocketReconnection = settings.websocketReconnection;
 	}
 
+	priceDecimals = settings.decimals ?? 4;
+	priceExpiration = settings.priceExpiration ?? 20;
+
+
 	if (!settings.server) {
 		throw new Error("ERROR: server not defined.");
 	}
 
 	server = settings.server;
-	token = settings.token;
+	token = settings.token ?? String.empty;
 
 	realPrice = 
 		{
@@ -252,11 +273,15 @@ async function sendPriceTransaction() {
 			socketAddress: "wss://ws-feed.pro.coinbase.com"
 		};
 
-	algodclient = new algosdk.Algod(String.empty, server, portNode); 
+	algodclient = new algosdk.Algod(token, server, portNode); 
 
-	if(recoveredAccount.addr !== settings.public) {
-		throw new Error("ERROR: Unable to load settings file.");
+	if(submitterAccount.addr !== settings.submitterPublic) {
+		throw new Error("ERROR: Submitter Public key does not match the Private key.");
 	}	
+	if(oracleAccount.addr !== settings.oraclePublic) {
+		throw new Error("ERROR: Oracle Public key does not match the Private key.");
+	}	
+
 	setTimeout(sendPriceTransaction);
 	listenSocketPrice();
 })().catch(e => {

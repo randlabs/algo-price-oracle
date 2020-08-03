@@ -4,7 +4,7 @@ The Algo Price Oracle maintains an on-chain ALGO/USD price to serve as a reliabl
 
 ## Price Source
 
-The code gets ALGO/USD price from Coinbase API subscribing to a socket receiving new trade updates keeping the price always updated.
+The code gets ALGO/USD price from Coinbase API subscribing to a socket receiving new trade updates keeping the price always updated. The 
 
 ## Transaction Submission
 
@@ -23,10 +23,33 @@ It needs a settings.js file like this one:
 
 ```
 module.exports = {
-	key: "YOUR MNEMONIC",
-	public: "MYALGORANDADDRESS",
+	// private key passphrase of the transaction submitter
+	submitterKey: "YOUR MNEMONIC",
+
+	// public address of the submitter private key
+	submitterPublic: "MY-ALGORAND-ADDRESS-SUBMITTER",
+	
+	// private key passphrase of the oracle
+	oracleKey: "YOUR MNEMONIC",
+
+	// public address of the oracle private key
+	oraclePublic: "MY-ALGORAND-ADDRESS-ORACLE",
+	
+	// API server
 	server: "api.algoexplorer.io",
+	
+	// tx submission interval
 	interval: 1000,
-	token: headers needed to call Algorand APIs. Using algoexplorer.io API it is not neeeded
+
+	// decimals of the price sumbitted on-chain
+	decimals: 4,
+
+	// number of rounds that the price can be used
+	priceExpiration: 20,
+
+	// headers needed to call Algorand APIs. Using algoexplorer.io API it is not neeeded
+	token: {
+		'X-YOUR-KEY' : 'your-key',
+	}
 }
 ```
