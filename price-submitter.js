@@ -168,7 +168,7 @@ async function sendPriceTransaction() {
 				if (suggestedParams.lastRound !== lastPriceRound) {
 					let price = Math.floor (marketData.price * Math.pow(10, priceDecimals) );
 
-					let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAZChDwUGJgEgK+3MznfMOKICd7ZFpboZ5Q4jRSP/getreWQoYDjPqqMxECISMQEyABIQMQgjDxAxBygSEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
+					let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAZChDwUGJgEgfFAiP2bRer9k3bTSgCiQtxyU7Kzl6lgPKPs1UMy1oecxECISMQEyABIQMQgjDxAxBygSEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
 		
 					let referenceOffsets = [ /*Price*/ 7, /*LastValid*/ 8];
 					let injectionVector =  [price, params.lastRound + priceExpiration];
@@ -282,10 +282,10 @@ async function sendPriceTransaction() {
 
 	if(submitterAccount.addr !== settings.submitterPublic) {
 		throw new Error("ERROR: Submitter Public key does not match the Private key.");
-	}	
+	}
 	if(oracleAccount.addr !== settings.oraclePublic) {
 		throw new Error("ERROR: Oracle Public key does not match the Private key.");
-	}	
+	}
 
 	setTimeout(sendPriceTransaction);
 	listenSocketPrice();

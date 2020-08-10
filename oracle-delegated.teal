@@ -1,0 +1,42 @@
+// Signs statements to be used as inputs to the TEAL script.
+// This is an ephemeral escrow.
+// TMPL_ORACLE_FEE_COLLECTOR:	public key of the oracle fee collector that receives the fees
+// TMPL_ORACLE_FEE: 			fee to pay to the oracle
+
+txn TypeEnum
+int 1
+==
+
+txn Fee
+global MinTxnFee
+==
+&&
+
+// Oracle fee
+txn Amount
+int 250000 // TMPL_ORACLE_FEE
+>=
+&&
+
+txn Receiver 
+addr PRICEP3G2F5L6ZG5WTJIAKEQW4OJJ3FM4XVFQDZI7M2VBTFVUHTTR2AU2U // TMPL_ORACLE_FEE_COLLECTOR
+==
+&&
+
+txn CloseRemainderTo 
+global ZeroAddress
+==
+&&
+
+txn Note
+btoi
+// this number is replaced by the inject function
+int 5
+==
+&&
+
+txn LastValid
+// this number is replaced by the inject function
+int 6
+<=
+&&
