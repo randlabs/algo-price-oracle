@@ -168,9 +168,10 @@ async function sendPriceTransaction() {
 				if (suggestedParams.lastRound !== lastPriceRound) {
 					let price = Math.floor (marketData.price * Math.pow(10, priceDecimals) );
 
-					let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAZChDwUGJgEgfFAiP2bRer9k3bTSgCiQtxyU7Kzl6lgPKPs1UMy1oecxECISMQEyABIQMQgjDxAxBygSEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
+					//let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAZChDwUGJgEgfFAiP2bRer9k3bTSgCiQtxyU7Kzl6lgPKPs1UMy1oecxECISMQEyABIQMQgjDxAxBygSEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
+					let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAQAFBjEQIhIxATIAEhAxCCMPEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
 		
-					let referenceOffsets = [ /*Price*/ 7, /*LastValid*/ 8];
+					let referenceOffsets = [ /*Price*/ 5, /*LastValid*/ 6];
 					let injectionVector =  [price, params.lastRound + priceExpiration];
 					let injectionTypes = [templates.valTypes.INT, templates.valTypes.INT];
 		
@@ -206,6 +207,7 @@ async function sendPriceTransaction() {
 				if (elapsed < txInterval) {
 					sleepInterval = txInterval - elapsed;
 				}
+				console.log('Sleep interval ' + sleepInterval);
 			}
 			catch(e) {
 				if(e && e.error && e.error.message) {

@@ -14,7 +14,7 @@ global MinTxnFee
 
 // Oracle fee
 txn Amount
-int 250000 // TMPL_ORACLE_FEE
+int 1000 // TMPL_ORACLE_FEE
 >=
 &&
 
