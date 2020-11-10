@@ -154,18 +154,13 @@ async function sendPriceTransaction() {
 			try {
 				var date = new Date();
 	
-				let params = await algodclient.getTransactionParams();
+				let params = await algodclient.getTransactionParams().do();
 		
-				let suggestedParams = {
-					"genesisHash": params.genesishashb64,
-					"genesisID": params.genesisID,
-					"firstRound": params.lastRound,
-					"lastRound": params.lastRound + 10,
-					"fee": params.minFee,
-					"flatFee": true
-				};
-		
-				if (suggestedParams.lastRound !== lastPriceRound) {
+				params.fee = 1000
+				params.flatFee = true
+				params.lastRound = params.firstRound + 10
+
+				if (params.lastRound !== lastPriceRound) {
 					let price = Math.floor (marketData.price * Math.pow(10, priceDecimals) );
 
 					let oracleProgramReferenceProgramBytesReplace = Buffer.from("ASAEAQAFBjEQIhIxATIAEhAxCCMSEDEJMgMSEDEFFyQSEDEEJQ4Q", 'base64');
@@ -188,15 +183,12 @@ async function sendPriceTransaction() {
 						timestamp: date.toISOString()
 					}
 			
-				 	let oraclePriceSubmitterTx = algosdk.makePaymentTxn (submitterAccount.addr,
-						submitterAccount.addr, params.minFee, 0, undefined, suggestedParams.firstRound, suggestedParams.lastRound, 
-						algosdk.encodeObj(priceObj), suggestedParams.genesisHash, suggestedParams.genesisID);
-					oraclePriceSubmitterTx.flatFee = true;
-					oraclePriceSubmitterTx.fee = params.minFee;
+				 	let oraclePriceSubmitterTx = algosdk.makePaymentTxnWithSuggestedParams (submitterAccount.addr,
+						submitterAccount.addr, 0, undefined, algosdk.encodeObj(priceObj), params);
 					let oraclePriceSubmitterTxSigned = oraclePriceSubmitterTx.signTxn(submitterAccount.sk);
-					let oraclePriceTx = (await timeoutPromise(5000,  algodclient.sendRawTransaction(oraclePriceSubmitterTxSigned) ) );
+					let oraclePriceTx = (await timeoutPromise(5000,  algodclient.sendRawTransaction(oraclePriceSubmitterTxSigned).do() ) );
 
-					lastPriceRound = suggestedParams.lastRound;
+					lastPriceRound = params.lastRound;
 					
 					console.log("Price Transaction Submitted: " + oraclePriceTx.txId + " submitted on block " + params.lastRound + " Data Timestamp " + priceObj.timestamp);
 				}		
@@ -279,7 +271,7 @@ async function sendPriceTransaction() {
 			socketAddress: "wss://ws-feed.pro.coinbase.com"
 		};
 
-	algodclient = new algosdk.Algod(token, server, portNode); 
+	algodclient = new algosdk.Algodv2(token, server, portNode); 
 
 	if(submitterAccount.addr !== settings.submitterPublic) {
 		throw new Error("ERROR: Submitter Public key does not match the Private key.");
