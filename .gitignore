@@ -1,0 +1,4 @@
+node_modules
+package-lock.json
+settings.js
+pm2.js
