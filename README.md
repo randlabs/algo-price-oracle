@@ -36,13 +36,16 @@ module.exports = {
 	oraclePublic: "MY-ALGORAND-ADDRESS-ORACLE",
 	
 	// API server
-	server: "api.algoexplorer.io",
+	server: "https://api.algoexplorer.io",
 	
 	// tx submission interval
 	interval: 1000,
 
 	// decimals of the price sumbitted on-chain
 	decimals: 4,
+
+	// reconnection timeout
+	websocketReconnection: 2000,
 
 	// number of rounds that the price can be used
 	priceExpiration: 20,
